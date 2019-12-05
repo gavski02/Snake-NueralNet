@@ -1,17 +1,28 @@
-function Snake() {
-    this.x = 0;
-    this.y = 0;
+function Snake(brain) {
+    this.x = 300;
+    this.y = 250;
     this.xspeed = 1;
     this.yspeed = 0;
     this.total = 0;
     this.tail = [];
 
+    this.score = 0;
+    this.fitness = 0;
+    if(brain) {
+        this.brain = brain.copy();
+    }else {
+        this.brain = new NeuralNetwork(4, 4, 8);
+    }
+
+
     this.dir = function (x, y) {
+        this.score++;
         this.xspeed = x;
         this.yspeed = y;
     }
 
     this.eat = function(pos) {
+        this.score += 5;
         let d = dist(this.x, this.y, pos.x, pos.y);
         if (d < 1) {
             this.total++;
@@ -19,7 +30,7 @@ function Snake() {
         } else {
             return false;
         }
-    }
+    };
 
     this.death = function() {
         for (let i = 0; i < this.tail.length; i++) {
@@ -30,6 +41,38 @@ function Snake() {
                 this.tail = [];
             }
         }
+
+    };
+
+    this.think = function(food){
+
+        let inputs = [];
+        inputs[0] = this.x / width;
+        inputs[1] = this.y / height;
+        inputs[2] = food.x / width;
+        inputs[3] = food.y / height;
+
+        //console.log(inputs);
+
+        let output = this.brain.predict(inputs);
+        if(output[0] > output[4]){
+            this.dir(0, -1);
+        } 
+        if(output[1] > output[5]){
+            this.dir(0, 1);
+        }
+        if(output[2] > output[6]){
+            this.dir(-1, 0);
+        }
+        if(output[3] > output[7]){
+            this.dir(1, 0);
+        }
+
+        //console.log(output)
+    }
+
+    this.mutate = function(){
+        this.brain.mutate(0.1);
     }
 
     this.update = function() {
@@ -42,8 +85,8 @@ function Snake() {
         this.x = this.x + this.xspeed*s;
         this.y = this.y + this.yspeed*s;
 
-        this.x = constrain(this.x, 0, width-s);
-        this.y = constrain(this.y, 0, height-s);
+        //this.x = constrain(this.x, 0, width-s);
+        //this.y = constrain(this.y, 0, height-s);
     }
 
     this.show = function() {
